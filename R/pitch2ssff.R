@@ -1,3 +1,18 @@
+#' Format Pitch object as SSFF
+#'
+#' Convert Praat Pitch object (as loaded in memory through the Python
+#' interface `parselmouth`) to `list` object with the Simple Signal File Format.
+#'
+#' @param pit `parselmouth.Pitch` object
+#'
+#' @returns List object of class `AsspDataObj`.
+#' @export
+#'
+#' @examples
+#' # Don't use directly
+#' datapath <- system.file('extdata', package='praatutils')
+#' soundFile <- paste0(datapath, '/1.wav')
+#' pit_ssff <- pitchRawAC(soundFile, output = 'ssff')
 pitch2ssff <- function(pit) {
   ado <- list()
   attr(ado, 'sampleRate') <- 1 / pit$time_step
