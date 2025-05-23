@@ -34,7 +34,7 @@ formant2table <- function(fm, filename,
       if (!is.numeric(out[,x])) out[,x] <- suppressWarnings(as.numeric(out[,x]))
     }
     colnames(out)[1] <- 't'
-    tmp <- cbind(file = rep(filename, nrow(out)), out)
+    out <- cbind(file = rep(filename, nrow(out)), out)
   } else {
     fn <- rep(filename, length(times))
     t <- times

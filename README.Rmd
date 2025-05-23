@@ -1,0 +1,174 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+knitr::opts_knit$set(root.dir = system.file('extdata', package = 'praatutils'))
+```
+
+# praatutils
+
+`praatutils` is a developmental R package that aims to provide relatively hassle-free access to some of the signal processing of [Praat](https://fon.hum.uva.nl/praat).
+
+There are already tools in R to help interact with Praat. Praat shows up in four package descriptions on [CRAN](https://cran.r-project.org/web/packages/available_packages_by_name.html): [`textgRid`](https://cran.r-project.org/web/packages/textgRid/index.html) and [`readtextgrid`](https://cran.r-project.org/web/packages/readtextgrid/index.html) provide tools for working with the TextGrid annotation format, [`speakr`](https://cran.r-project.org/web/packages/speakr/index.html) provides methods for running Praat scripts from R and reading in results. My library [`praatpicture`](https://cran.r-project.org/web/packages/praatpicture/index.html) provides methods for plotting acoustic data, including data from Praat objects. Finally the package [`phonfieldwork`](https://cran.r-project.org/web/packages/phonfieldwork/index.html) provides, among other things, some ways of interacting with Praat objects.
+
+These are all great tools, but to the extent that they provide access to Praat's extensive and excellent signal processing tools, they require files to be generated and saved in Praat, or they require pre-existing Praat scripts. [`speakr`] calls Praat through a shell, which is a method that I realy on very often, but which tends to be a bit fragile across operating systems, which can cause trouble for general-purpose pipelines. I suspect that what many users *really* want is the ability to call Praat's source code from R and get outputs that are interpretable from R -- similar to how the library [`wrassp`](https://cran.r-project.org/web/packages/wrassp/index.html) provides direct access to the signal processing library ASSP by calling the underlying C code.
+
+Python users can do this with the [`parselmouth`](https://parselmouth.readthedocs.io/en/stable/) library, which provides a 'pythonic' approach to accessing Praat routines through a direct C/C++ interface with wrapper functions for many routines and an ability to call any non-wrapped routine through a generic `call()` function. Arguably a major advantage of `parselmouth` is that it comes bundled with a specific Praat version, which means that it's not reliant on calling an installation of Praat that's already *somewhere* on the user's system. This ability to access all of Praat through a general-purpose programming language is fantastic, and the approach probably jives very well with what Python users are looking for. My sense is that R users are looking for a different approach, e.g. reducing the steps needed from going from a directory of WAV files to a nice data frame with derived signal values. (Or that may just be what **I'm** looking for.)
+
+`praatutils` is an attempt at exactly this: providing functions that call Praat's source code directly to do signal processing and return familiar objects like data frames. This is mainly done via `parselmouth` and is made possible by the R library [`reticulate`](https://www.r-bloggers.com/2022/04/getting-started-with-python-using-r-and-reticulate/) which manages interfaces between R and Python. If nothing fails, this should mean that the users doesn't need to point R towards a specific installation of Python or a specific installation of Praat -- when `praatutils` is first called, `reticulate` makes sure that everything is installed and can be called, installs anything that's missing, and this may take a few seconds, but every subsequent `praatutils` call in the same session is done with very minimal overhead. 
+
+This is just a very first attempt at a durable Praat/R interface that doesn't do very much (not yet at least)! If you have ideas about ways to improve, if you're missing something, or especially if you're interested in contributing, feel free to reach out! 
+
+## Installation
+
+You can install the development version of `praatutils` from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages('devtools)
+devtools::install_github('rpuggaardrode/praatutils')
+```
+
+## Basic usage
+
+I'll introduce a few basic functions here.
+
+```{r}
+library(praatutils)
+```
+
+The function `readSound()` reads in a sound file. This is arguably preferable to functions provided by other libraries since Praat is relatively file type agnostic. The output is a list with some basic information about the sound file, such as sampling rate, start time, end time, etc, as well as the signal.
+
+```{r}
+snd <- readSound('1.wav')
+snd$fs; snd$start; snd$end
+plot(snd$t, snd$signal, type = 'l', xlab = 'Time (s)', ylab = '')
+```
+
+You can choose to read in just a portion of the sound file:
+
+```{r}
+snd <- readSound('1.wav', start = 0.6, end = 1)
+plot(snd$t, snd$signal, type = 'l', xlab = 'Time (s)', ylab = '')
+```
+
+Pitch can be tracked with the functions `pitchRawAC()`, `pitchRawCC()` or `pitchSHS()`. By default, the output of these functions have a format similar to the output of `wrassp` functions like `ksvF0()`:
+
+```{r}
+(pitAC <- pitchRawAC('1.wav'))
+```
+
+(This is useful if you want to use `praatutils` in combination with `praatpicture`, where these objects can then be plotted by passing them to the `pitch_ssff` argument:)
+
+```{r}
+library(praatpicture)
+praatpicture('1.wav', frames = c('sound', 'pitch'), start = 0.6, end = 1,
+             pitch_freqRange = c(50, 200), pitch_plotType = c('draw', 'speckle'),
+             pitch_ssff = pitAC)
+```
+
+Alternatively, you can specify different outputs with the `output` argument. Use `output = 'df'` for a data frame:
+
+```{r}
+pitAC <- pitchRawAC('1.wav', start = 0.65, end = 1,
+                    output = 'df')
+head(pitAC)
+plot(pitAC$t, pitAC$f0, pch = 20, xlab = 'Time (s)', ylab = 'f0 (Hz)')
+```
+
+As the `file` column suggests, these functions can process multiple files at once:
+
+```{r}
+pitAC <- pitchRawAC(c('1.wav', '2.wav'), output = 'df')
+nrow(pitAC); unique(pitAC$file)
+```
+
+You can also point these functions towards a directory, in which case all audio files in the directory are processed:
+
+```{r}
+list.files('.', pattern = '*.wav')
+pitAC <- pitchRawAC('.', output = 'df')
+nrow(pitAC); unique(pitAC$file)
+```
+
+To get a long data frame with information about all pitch candidates, use `output = 'candidates'`:
+
+```{r}
+pitAC <- pitchRawAC('1.wav', output = 'candidates')
+plot(pitAC$t, pitAC$frequency, pch = 20, 
+     xlim = c(0.6, 1.2), ylim = c(50, 200), 
+     cex = pitAC$strength * 2,
+     xlab = 'Time (s)', ylab = 'f0 (Hz)')
+```
+
+Crucially, all the usual pitch tracking parameters can be controlled, and some of Praat's post-processing tools can be automatically applied:
+
+```{r}
+args(pitchRawAC)
+```
+
+Formants can be tracked using the `formantBurg()` function:
+
+```{r}
+fmt <- formantBurg('1.wav', output = 'df', start = 0.6, end = 1.2)
+plot(fmt$t, fmt$F1, ylim = c(0, 5000),
+     xlab = 'Time (s)', ylab = 'Frequency (Hz)',
+     pch = 20, col = 'red')
+points(fmt$t, fmt$F2, pch = 20, col = 'blue')
+points(fmt$t, fmt$F3, pch = 20, col = 'darkgreen')
+points(fmt$t, fmt$F4, pch = 20, col = 'orange')
+```
+
+Viterbi tracking can be done on the formants as a built-in post-processing step. Here we track 3 formants with the default reference frequencies:
+
+```{r}
+fmt <- formantBurg('1.wav', output = 'df', start = 0.6, end = 1.2, 
+                   track = 3)
+plot(fmt$t, fmt$F1, ylim = c(0, 5000),
+     xlab = 'Time (s)', ylab = 'Frequency (Hz)',
+     pch = 20, col = 'red')
+points(fmt$t, fmt$F2, pch = 20, col = 'blue')
+points(fmt$t, fmt$F3, pch = 20, col = 'darkgreen')
+```
+
+Other signal processing functions currently available are `harmonicityAC()`, `harmonicityCC()`, `intensity()`, and `spectrogram()` (which works a little differently). Functions are available for reading in existing Praat objects stored to disk (`readPitch()`, `readFormant()`, etc) as data frames. 
+
+If you want some quick information about a file you can use the `printInfo()` function:
+
+```{r}
+printInfo('1.Intensity')
+```
+
+The function `readTextGrid()` can be used to read annotation information from a TextGrid as a data frame. This TextGrid has one tier "Mary" with two labels "b", "a". 
+
+```{r}
+(tg <- readTextGrid('1.TextGrid'))
+```
+
+The function `addTextGridLabels()` allows for this information to be matched with signal data:
+
+```{r}
+fmt <- addTextGridLabels(fmt, tg)
+fmt[105:125,]
+```
+
+This adds a new column with the tier name "Mary" indicating the label at any given time, making it easy to e.g. filter the object to only instances covered by the label "a":
+
+```{r}
+fmt_a <- fmt[which(fmt$Mary == 'a'),]
+plot(fmt_a$t, fmt_a$F1, ylim = c(0, 5000),
+     xlab = 'Time (s)', ylab = 'Frequency (Hz)',
+     pch = 20, col = 'red')
+points(fmt_a$t, fmt_a$F2, pch = 20, col = 'blue')
+points(fmt_a$t, fmt_a$F3, pch = 20, col = 'darkgreen')
+```
+
+
