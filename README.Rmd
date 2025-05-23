@@ -157,7 +157,7 @@ The function `addTextGridLabels()` allows for this information to be matched wit
 
 ```{r}
 fmt <- addTextGridLabels(fmt, tg)
-fmt[105:125,]
+fmt[10:20,]
 ```
 
 This adds a new column with the tier name "Mary" indicating the label at any given time, making it easy to e.g. filter the object to only instances covered by the label "a":

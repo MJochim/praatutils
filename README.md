@@ -255,7 +255,7 @@ printInfo('1.Intensity')
 #> Object id: 1
 #> Object type: Intensity
 #> Object name: untitled
-#> Date: Fri May 23 17:36:37 2025
+#> Date: Fri May 23 17:40:27 2025
 #> 
 #> Time domain:
 #>    Start time: 0 seconds
@@ -283,29 +283,19 @@ matched with signal data:
 
 ``` r
 fmt <- addTextGridLabels(fmt, tg)
-fmt[105:125,]
-#>       file  t nformants F1 F2 F3 Mary
-#> NA    <NA> NA        NA NA NA NA <NA>
-#> NA.1  <NA> NA        NA NA NA NA <NA>
-#> NA.2  <NA> NA        NA NA NA NA <NA>
-#> NA.3  <NA> NA        NA NA NA NA <NA>
-#> NA.4  <NA> NA        NA NA NA NA <NA>
-#> NA.5  <NA> NA        NA NA NA NA <NA>
-#> NA.6  <NA> NA        NA NA NA NA <NA>
-#> NA.7  <NA> NA        NA NA NA NA <NA>
-#> NA.8  <NA> NA        NA NA NA NA <NA>
-#> NA.9  <NA> NA        NA NA NA NA <NA>
-#> NA.10 <NA> NA        NA NA NA NA <NA>
-#> NA.11 <NA> NA        NA NA NA NA <NA>
-#> NA.12 <NA> NA        NA NA NA NA <NA>
-#> NA.13 <NA> NA        NA NA NA NA <NA>
-#> NA.14 <NA> NA        NA NA NA NA <NA>
-#> NA.15 <NA> NA        NA NA NA NA <NA>
-#> NA.16 <NA> NA        NA NA NA NA <NA>
-#> NA.17 <NA> NA        NA NA NA NA <NA>
-#> NA.18 <NA> NA        NA NA NA NA <NA>
-#> NA.19 <NA> NA        NA NA NA NA <NA>
-#> NA.20 <NA> NA        NA NA NA NA <NA>
+fmt[10:20,]
+#>     file     t nformants       F1       F2       F3 Mary
+#> 10 1.wav 0.684         3 1102.449 2665.088 3717.182    b
+#> 11 1.wav 0.691         3 1107.439 2645.259 3667.984    b
+#> 12 1.wav 0.697         3 1131.418 2623.783 3606.976    b
+#> 13 1.wav 0.703         3 1118.389 2626.729 3655.853    b
+#> 14 1.wav 0.709         3 1696.587 2450.620 3967.632    b
+#> 15 1.wav 0.716         3  575.738 1766.780 2421.986    b
+#> 16 1.wav 0.722         3  689.415 1626.651 2340.185    a
+#> 17 1.wav 0.728         3  660.428 1215.000 2795.875    a
+#> 18 1.wav 0.734         3  683.508 1264.819 2899.048    a
+#> 19 1.wav 0.741         3  709.209 1307.417 2918.493    a
+#> 20 1.wav 0.747         3  730.858 1326.587 2933.454    a
 ```
 
 This adds a new column with the tier name “Mary” indicating the label at
